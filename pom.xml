@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.symantec.cpe</groupId>
     <artifactId>kafka-monitoring-tool</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>kafka-monitoring-tool</name>
 
     <properties>
@@ -17,10 +17,11 @@
         <hadoop.version>2.2.0.2.0.10.0-1</hadoop.version>
         <oozie.version>4.0.0.2.1.4.0-632</oozie.version>
         <yarn.version>2.4.0</yarn.version>
-        <kafka.version>0.8.1</kafka.version>
+        <kafka.version>0.10.1.1</kafka.version>
         <curator-framework.version>2.7.0</curator-framework.version>
         <statsd.client.version>3.0.1</statsd.client.version>
         <commons.lang3.version>3.3.2</commons.lang3.version>
+        <log4j.version>1.2.17</log4j.version>
     </properties>
 
     <repositories>
@@ -35,6 +36,21 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>log4j-over-slf4j</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.zookeeper</groupId>
@@ -53,7 +69,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka_2.9.2</artifactId>
+            <artifactId>kafka_2.11</artifactId>
             <version>${kafka.version}</version>
             <exclusions>
                 <exclusion>
@@ -76,6 +92,11 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>${commons.lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
         </dependency>
     </dependencies>
     <build>

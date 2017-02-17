@@ -6,45 +6,13 @@ import javax.validation.Valid;
 
 public class KafkaMonitorConfiguration extends Configuration {
 
+    public static final String MONITORING_KAFKA_GROUP = "kafka-monitoring";
+
     @Valid
-    private String zookeeperUrls = "localhost:2181";
+    private String bootstrapServer = "localhost:9092";
 
     @Valid
     private int refreshSeconds = 60;
-
-    @Valid
-    private String statsDHost = "localhost";
-
-    @Valid
-    private int statsDPort = 8125;
-
-    @Valid
-    private String statsDPrefix = "kafka-monitoring";
-
-    /**
-     * The Zkroot will be used as root to store your consumer's offset. The id should uniquely identify your spout.
-     */
-    @Valid
-    private String stormZkRoot = "/kafkastorm";
-
-    public String getStormZkRoot() {
-        return stormZkRoot;
-    }
-
-    public void setStormZkRoot(String stormZkRoot) {
-        this.stormZkRoot = stormZkRoot;
-    }
-
-    @Valid
-    private boolean pushToStatsD = false;
-
-    public String getZookeeperUrls() {
-        return zookeeperUrls;
-    }
-
-    public void setZookeeperUrls(String zookeeperUrls) {
-        this.zookeeperUrls = zookeeperUrls;
-    }
 
     public int getRefreshSeconds() {
         return refreshSeconds;
@@ -54,35 +22,11 @@ public class KafkaMonitorConfiguration extends Configuration {
         this.refreshSeconds = refreshSeconds;
     }
 
-    public String getStatsDHost() {
-        return statsDHost;
+    public String getBootstrapServer() {
+        return bootstrapServer;
     }
 
-    public void setStatsDHost(String statsDHost) {
-        this.statsDHost = statsDHost;
-    }
-
-    public int getStatsDPort() {
-        return statsDPort;
-    }
-
-    public void setStatsDPort(int statsDPort) {
-        this.statsDPort = statsDPort;
-    }
-
-    public String getStatsDPrefix() {
-        return statsDPrefix;
-    }
-
-    public void setStatsDPrefix(String statsDPrefix) {
-        this.statsDPrefix = statsDPrefix;
-    }
-
-    public boolean isPushToStatsD() {
-        return pushToStatsD;
-    }
-
-    public void setPushToStatsD(boolean pushToStatsD) {
-        this.pushToStatsD = pushToStatsD;
+    public void setBootstrapServer(String bootstrapServer) {
+        this.bootstrapServer = bootstrapServer;
     }
 }

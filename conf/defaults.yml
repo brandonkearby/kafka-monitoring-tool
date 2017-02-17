@@ -1,0 +1,8 @@
+bootstrapServer: localhost:9092
+
+server:
+  applicationConnectors:
+    - type: http
+      port: 9090
+      maxRequestHeaderSize: 32KiB
+      maxResponseHeaderSize: 32KiB
