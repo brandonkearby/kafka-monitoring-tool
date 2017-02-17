@@ -11,6 +11,11 @@ import java.util.Set;
  */
 public class ClusterState {
     private Map<ConsumerGroup, ConsumerGroupState> groupState = new HashMap<>();
+    private Map<Topic, TopicState> topicState = new HashMap<>();
+
+    public Set<Topic> getTopics() {
+        return topicState.keySet();
+    }
 
     public Set<ConsumerGroup> getConsumerGroups() {
         return groupState.keySet();
@@ -21,7 +26,20 @@ public class ClusterState {
         return groupState.get(consumerGroup);
     }
 
-    public void put(ConsumerGroup consumerGroup, ConsumerGroupState consumerGroupState) {
+    public void setConsumerGroupState(ConsumerGroup consumerGroup, ConsumerGroupState consumerGroupState) {
         groupState.put(consumerGroup, consumerGroupState);
+    }
+
+    public void setTopicState(Topic topic, Partition partition, Long offset) {
+        Objects.requireNonNull(topic, "Topic can't be null");
+        Objects.requireNonNull(partition, "Partition can't be null");
+        Objects.requireNonNull(offset, "Offset can't be null");
+
+        TopicState ts = this.topicState.get(topic);
+        if (ts == null) {
+            ts = new TopicState(topic);
+            this.topicState.put(topic, ts);
+        }
+        ts.setOffset(partition, offset);
     }
 }

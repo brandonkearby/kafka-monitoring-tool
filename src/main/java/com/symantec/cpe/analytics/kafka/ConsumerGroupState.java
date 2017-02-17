@@ -30,15 +30,15 @@ public class ConsumerGroupState {
         return topicAndPartitionState.get(topic);
     }
 
-    public void set(TopicPartition topicPartition, OffsetAndMetadata consumerOffset, long producerOffset) {
-        Topic topic = new Topic(topicPartition.toString());
+    public void set(TopicPartition topicPartition, OffsetAndMetadata consumerOffset) {
+        Topic topic = new Topic(topicPartition.topic());
         Map<Partition, OffsetState> consumerTopicAndPartitionStates = topicAndPartitionState.get(topic);
         if (consumerTopicAndPartitionStates == null) {
             consumerTopicAndPartitionStates = new TreeMap<>();
             topicAndPartitionState.put(topic, consumerTopicAndPartitionStates);
         }
         Partition partition = new Partition(topicPartition.partition());
-        consumerTopicAndPartitionStates.put(partition, new OffsetState(consumerOffset, producerOffset));
+        consumerTopicAndPartitionStates.put(partition, new OffsetState(consumerOffset));
     }
 
     @Override

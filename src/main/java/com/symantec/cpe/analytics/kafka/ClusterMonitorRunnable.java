@@ -2,7 +2,6 @@ package com.symantec.cpe.analytics.kafka;
 
 import com.symantec.cpe.analytics.KafkaMonitorConfiguration;
 import com.symantec.cpe.analytics.core.kafka.KafkaOffsetMonitor;
-import io.dropwizard.lifecycle.Managed;
 import kafka.common.OffsetAndMetadata;
 import kafka.common.OffsetMetadata;
 import kafka.coordinator.*;
@@ -26,6 +25,8 @@ import java.util.*;
 public class ClusterMonitorRunnable implements Runnable {
 
     private static final String CONSUMER_OFFSETS_TOPIC = "__consumer_offsets";
+    private static final byte[] lock = new byte[0];
+
     private boolean running;
     private KafkaMonitorConfiguration kafkaMonitorConfiguration;
     private KafkaConsumer<ByteBuffer, ByteBuffer> consumer;
@@ -81,7 +82,7 @@ public class ClusterMonitorRunnable implements Runnable {
                     ConsumerGroupState consumerGroupState = clusterState.get(consumerGroup);
                     if (consumerGroupState == null) {
                         consumerGroupState = new ConsumerGroupState(consumerGroup);
-                        clusterState.put(consumerGroup, consumerGroupState);
+                        clusterState.setConsumerGroupState(consumerGroup, consumerGroupState);
                     }
                     if (offsetAndMetadata == null) {
                         offsetAndMetadata = new OffsetAndMetadata(new OffsetMetadata(getFirstOffset(groupTopicPartition.topicPartition()), ""), 0,0);
@@ -89,7 +90,7 @@ public class ClusterMonitorRunnable implements Runnable {
                     log.debug("offsetAndMetadata = " + offsetAndMetadata);
                     log.debug("consumerGroupState = " + consumerGroupState);
 
-                    consumerGroupState.set(groupTopicPartition.topicPartition(), offsetAndMetadata, getLastOffset(groupTopicPartition.topicPartition()));
+                    consumerGroupState.set(groupTopicPartition.topicPartition(), offsetAndMetadata);
 
                 } else {
                     throw new IllegalStateException("Unknown BaseKey: " + baseKey);
@@ -124,23 +125,27 @@ public class ClusterMonitorRunnable implements Runnable {
     }
 
     private long getLastOffset(TopicPartition topicPartition) {
-        KafkaConsumer consumer = getLatestOffsetConsumer();
-        Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
-        consumer.assign(topicPartitionSet);
-        consumer.seekToEnd(topicPartitionSet);
-        long lastOffset = consumer.position(topicPartition);
-        consumer.unsubscribe();
-        return lastOffset;
+        synchronized (lock) {
+            KafkaConsumer consumer = getLatestOffsetConsumer();
+            Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
+            consumer.assign(topicPartitionSet);
+            consumer.seekToEnd(topicPartitionSet);
+            long lastOffset = consumer.position(topicPartition);
+            consumer.unsubscribe();
+            return lastOffset;
+        }
     }
 
     private long getFirstOffset(TopicPartition topicPartition) {
-        KafkaConsumer consumer = getLatestOffsetConsumer();
-        Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
-        consumer.assign(topicPartitionSet);
-        consumer.seekToBeginning(topicPartitionSet);
-        long lastOffset = consumer.position(topicPartition);
-        consumer.unsubscribe();
-        return lastOffset;
+        synchronized (lock) {
+            KafkaConsumer consumer = getLatestOffsetConsumer();
+            Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
+            consumer.assign(topicPartitionSet);
+            consumer.seekToBeginning(topicPartitionSet);
+            long lastOffset = consumer.position(topicPartition);
+            consumer.unsubscribe();
+            return lastOffset;
+        }
     }
 
     private KafkaConsumer<String, String> latestOffsetConsumer;
@@ -169,8 +174,12 @@ public class ClusterMonitorRunnable implements Runnable {
                 Map<Partition, OffsetState> partitionOffsetState = consumerGroupState.getPartitionOffsetState(topic);
                 for (Map.Entry<Partition, OffsetState> entry : partitionOffsetState.entrySet()) {
                     OffsetState offsetState = entry.getValue();
+                    long lastOffset = getLastOffset(new TopicPartition(topic.name, entry.getKey().id));
+                    long consumerOffset = offsetState.getConsumerOffsetMetadata().offset();
+                    long lag = lastOffset - consumerOffset;
+
                     KafkaOffsetMonitor kafkaOffsetMonitor = new KafkaOffsetMonitor(consumerGroup.groupId,
-                            topic.name, entry.getKey().id, offsetState.getProducerOffset(), offsetState.getConsumerOffsetMetadata().offset(), offsetState.getLag());
+                            topic.name, entry.getKey().id, lastOffset, consumerOffset, lag);
                     kafkaOffsetMonitors.add(kafkaOffsetMonitor);
                 }
             }
