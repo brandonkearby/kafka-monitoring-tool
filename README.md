@@ -8,7 +8,7 @@ Maven 3
 ## Installation (install commands)
 git clone https://github.com/brandonkearby/kafka-monitoring-tool.git
 
-cd kafka-monitor
+cd kafka-monitoring-tool
 
 mvn package
 
@@ -17,7 +17,7 @@ You will have the kafka-monitoring-tool-0.0.2.jar created in the “target” di
 ## Running project
 _java -jar target/kafka-monitoring-tool-0.0.2.jar server_
 
-By default the application assumes the bootstrapServer is running localhost on port 9092. If you need to provide a zookeeper host, pass it as a jvm parameter like this:
+By default the application assumes the bootstrapServer is running localhost on port 9092. If you need to provide a bootstrap host, pass it as a jvm parameter like this:
 
 _java -Ddw.bootstrapServer=<host:port> -jar kafka-monitoring-tool-0.0.2.jar server_
 
@@ -25,7 +25,7 @@ Once the server is up, run the following command from localhost to get the infor
 _curl -X GET http://localhost:8080/kafka/offset_
 
 ## Configuration (config commands)
-The application can also be passed a yml file as a configuration file, instead of passing the zookeeper urls on the command line. Default.yml file is available in the project. The way you start the project with yml file is like this:
+The application can also be passed a yml file as a configuration file, instead of passing the bootstrap host on the command line. Default.yml file is available in the project. The way you start the project with yml file is like this:
 
 _java -jar kafka-monitoring-tool-0.0.2.jar server default.yml_
 
