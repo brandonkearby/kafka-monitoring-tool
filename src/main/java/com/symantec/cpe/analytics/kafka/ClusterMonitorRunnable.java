@@ -2,6 +2,7 @@ package com.symantec.cpe.analytics.kafka;
 
 import com.symantec.cpe.analytics.KafkaMonitorConfiguration;
 import com.symantec.cpe.analytics.core.kafka.KafkaOffsetMonitor;
+import com.symantec.cpe.analytics.core.kafka.KafkaTopicMonitor;
 import kafka.common.OffsetAndMetadata;
 import kafka.common.OffsetMetadata;
 import kafka.coordinator.*;
@@ -9,6 +10,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -151,17 +153,22 @@ public class ClusterMonitorRunnable implements Runnable {
     private KafkaConsumer<String, String> latestOffsetConsumer;
     private KafkaConsumer getLatestOffsetConsumer() {
         if (latestOffsetConsumer == null) {
-            Properties props = new Properties();
-            props.put(ConsumerConfig.GROUP_ID_CONFIG, KafkaMonitorConfiguration.MONITORING_KAFKA_GROUP);
-            props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaMonitorConfiguration.getBootstrapServer());
-            props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
-            props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-            props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-            props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
+            Properties props = getProperties(KafkaMonitorConfiguration.MONITORING_KAFKA_GROUP);
             latestOffsetConsumer = new KafkaConsumer<>(props);
             log.info("Created a new Kafka Consumer");
         }
         return latestOffsetConsumer;
+    }
+
+    private Properties getProperties(String consumerGroup) {
+        Properties props = new Properties();
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, consumerGroup);
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaMonitorConfiguration.getBootstrapServer());
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "30000");
+        return props;
     }
 
     public List<KafkaOffsetMonitor> getKafkaOffsetMonitors() {
@@ -174,12 +181,12 @@ public class ClusterMonitorRunnable implements Runnable {
                 Map<Partition, OffsetState> partitionOffsetState = consumerGroupState.getPartitionOffsetState(topic);
                 for (Map.Entry<Partition, OffsetState> entry : partitionOffsetState.entrySet()) {
                     OffsetState offsetState = entry.getValue();
-                    long lastOffset = getLastOffset(new TopicPartition(topic.name, entry.getKey().id));
+                    long lastOffset = getLastOffset(new TopicPartition(topic.getName(), entry.getKey().id));
                     long consumerOffset = offsetState.getConsumerOffsetMetadata().offset();
                     long lag = lastOffset - consumerOffset;
 
                     KafkaOffsetMonitor kafkaOffsetMonitor = new KafkaOffsetMonitor(consumerGroup.groupId,
-                            topic.name, entry.getKey().id, lastOffset, consumerOffset, lag);
+                            topic.getName(), entry.getKey().id, lastOffset, consumerOffset, lag);
                     kafkaOffsetMonitors.add(kafkaOffsetMonitor);
                 }
             }
@@ -189,5 +196,83 @@ public class ClusterMonitorRunnable implements Runnable {
 
     public void stop() {
         this.running = false;
+    }
+
+    private void refreshTopicState() {
+        KafkaConsumer latestOffsetConsumer = getLatestOffsetConsumer();
+        Map<String, List<PartitionInfo>> topics = latestOffsetConsumer.listTopics();
+        for (Map.Entry<String, List<PartitionInfo>> entry : topics.entrySet()) {
+            List<PartitionInfo> partitionInfos = entry.getValue();
+            for (PartitionInfo partitionInfo : partitionInfos) {
+                Topic topic = new Topic(entry.getKey());
+                Partition partition = new Partition(partitionInfo.partition());
+                TopicPartition topicPartition = new TopicPartition(topic.getName(), partition.id);
+                long firstOffset = getFirstOffset(topicPartition);
+                long lastOffset = getLastOffset(topicPartition);
+                this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset);
+            }
+        }
+    }
+
+    public List<KafkaTopicMonitor> getKafkaTopicMonitors() {
+        refreshTopicState();
+        List<KafkaTopicMonitor> kafkaTopicMonitors = new ArrayList<>();
+        Set<Topic> topics = this.clusterState.getTopics();
+        for (Topic topic : topics) {
+            if (topic.getName().equals(CONSUMER_OFFSETS_TOPIC)) {
+                continue;
+            }
+            TopicState topicState = this.clusterState.getTopicState(topic);
+            if (topicState == null) {
+                continue;
+            }
+            Set<Partition> partitions = topicState.getPartitions();
+            for (Partition partition : partitions) {
+                Long firstOffset = topicState.getFirstOffset(partition);
+                Long lastOffset = topicState.getLastOffset(partition);
+                kafkaTopicMonitors.add(new KafkaTopicMonitor(topic.getName(), partition.id, firstOffset, lastOffset, lastOffset - firstOffset));
+            }
+        }
+        return kafkaTopicMonitors;
+    }
+
+    public void seekToBeginning(String consumerGroup, String topic) {
+        refreshTopicState();
+        TopicState topicState = clusterState.getTopicState(new Topic(topic));
+        Set<Partition> partitions = topicState.getPartitions();
+        Properties properties = getProperties(consumerGroup);
+        KafkaConsumer kafkaConsumer = new KafkaConsumer(properties);
+        for (Partition partition : partitions) {
+            TopicPartition topicPartition = new TopicPartition(topic, partition.id);
+            Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
+            kafkaConsumer.assign(topicPartitions);
+            kafkaConsumer.seekToBeginning(topicPartitions);
+            kafkaConsumer.position(topicPartition);
+            kafkaConsumer.commitSync();
+            kafkaConsumer.unsubscribe();
+        }
+        kafkaConsumer.close();
+    }
+
+    public void seekToEnd(String consumerGroup, String topic) {
+        refreshTopicState();
+        TopicState topicState = clusterState.getTopicState(new Topic(topic));
+        Set<Partition> partitions = topicState.getPartitions();
+        Properties properties = getProperties(consumerGroup);
+        KafkaConsumer kafkaConsumer = new KafkaConsumer(properties);
+        for (Partition partition : partitions) {
+            TopicPartition topicPartition = new TopicPartition(topic, partition.id);
+            Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
+            kafkaConsumer.assign(topicPartitions);
+            kafkaConsumer.seekToEnd(topicPartitions);
+            kafkaConsumer.position(topicPartition);
+            kafkaConsumer.commitSync();
+            kafkaConsumer.unsubscribe();
+        }
+        kafkaConsumer.close();
+    }
+
+    public ClusterState getClusterState() {
+        return clusterState;
     }
 }

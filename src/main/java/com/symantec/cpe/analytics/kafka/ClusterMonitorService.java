@@ -2,6 +2,7 @@ package com.symantec.cpe.analytics.kafka;
 
 import com.symantec.cpe.analytics.KafkaMonitorConfiguration;
 import com.symantec.cpe.analytics.core.kafka.KafkaOffsetMonitor;
+import com.symantec.cpe.analytics.core.kafka.KafkaTopicMonitor;
 import io.dropwizard.lifecycle.Managed;
 
 import java.util.List;
@@ -33,5 +34,21 @@ public class ClusterMonitorService implements Managed {
 
     public List<KafkaOffsetMonitor> getKafkaOffsetMonitors() {
         return clusterMonitorRunnable.getKafkaOffsetMonitors();
+    }
+
+    public List<KafkaTopicMonitor> getKafkaTopicMonitors() {
+        return clusterMonitorRunnable.getKafkaTopicMonitors();
+    }
+
+    public void seekToBeginning(String consumerGroup, String topic) {
+        clusterMonitorRunnable.seekToBeginning(consumerGroup, topic);
+    }
+
+    public void seekToEnd(String consumerGroup, String topic) {
+        clusterMonitorRunnable.seekToEnd(consumerGroup, topic);
+    }
+
+    public ClusterState getClusterState() {
+        return clusterMonitorRunnable.getClusterState();
     }
 }

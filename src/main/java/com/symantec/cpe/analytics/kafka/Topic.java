@@ -6,10 +6,10 @@ import java.util.Objects;
  * @author Brandon Kearby
  *         February 16 2017.
  */
-class Topic {
-    String name;
+public class Topic {
+    private String name;
 
-    Topic(String name) {
+    public Topic(String name) {
         Objects.requireNonNull(name, "name can't be null");
         this.name = name;
     }
@@ -32,6 +32,10 @@ class Topic {
 
     @Override
     public String toString() {
+        return name;
+    }
+
+    public String getName() {
         return name;
     }
 }

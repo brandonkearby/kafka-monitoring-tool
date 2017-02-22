@@ -37,4 +37,4 @@ _http://localhost:8080/kafka/offset?outputType=html_
 
 
 You can also configure all these properties in a yml config file and pass in the config file to the app, like
-_java -jar kafka-monitoring-tool-0.0.2.jar server defaults.yml_
+_java -jar kafka-monitoring-tool-0.0.2.jar server conf/defaults.yml_
