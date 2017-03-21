@@ -25,7 +25,7 @@ import java.util.Set;
 @Consumes(MediaType.APPLICATION_JSON)
 public class KafkaResource {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaResource.class);
-    public static final Function<String, Topic> TOPIC_FUNCTION = new Function<String, Topic>() {
+    private static final Function<String, Topic> STRING_TO_TOPIC_FUNCTION = new Function<String, Topic>() {
         @Nullable
         @Override
         public Topic apply(@Nullable String input) {
@@ -78,7 +78,7 @@ public class KafkaResource {
         beginning,
         end
     }
-  
+
     @Path("/consumer/{consumerGroup}/seek")
     @PUT
     @Produces({MediaType.APPLICATION_JSON})
@@ -96,7 +96,7 @@ public class KafkaResource {
                 topicSet = consumerGroupState.getTopics();
             }
             else {
-                topicSet = Sets.newHashSet(Lists.transform(Arrays.asList(selectedTopics), TOPIC_FUNCTION));
+                topicSet = Sets.newHashSet(Lists.transform(Arrays.asList(selectedTopics), STRING_TO_TOPIC_FUNCTION));
             }
 
             for (Topic topic : topicSet) {
