@@ -248,6 +248,7 @@ public class ClusterMonitorRunnable implements Runnable {
             kafkaConsumer.assign(topicPartitions);
             kafkaConsumer.seekToBeginning(topicPartitions);
             kafkaConsumer.position(topicPartition);
+            kafkaConsumer.poll(0);
             kafkaConsumer.commitSync();
             kafkaConsumer.unsubscribe();
         }
@@ -266,6 +267,7 @@ public class ClusterMonitorRunnable implements Runnable {
             kafkaConsumer.assign(topicPartitions);
             kafkaConsumer.seekToEnd(topicPartitions);
             kafkaConsumer.position(topicPartition);
+            kafkaConsumer.poll(0);
             kafkaConsumer.commitSync();
             kafkaConsumer.unsubscribe();
         }
