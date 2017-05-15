@@ -80,6 +80,7 @@ public class ClusterMonitorRunnable implements Runnable {
                     log.debug("offsetKey = " + offsetKey);
                     OffsetAndMetadata offsetAndMetadata = GroupMetadataManager.readOffsetMessageValue(record.value());
 
+
                     ConsumerGroup consumerGroup = new ConsumerGroup(groupTopicPartition.group());
                     ConsumerGroupState consumerGroupState = clusterState.get(consumerGroup);
                     if (consumerGroupState == null) {
@@ -147,6 +148,20 @@ public class ClusterMonitorRunnable implements Runnable {
             long lastOffset = consumer.position(topicPartition);
             consumer.unsubscribe();
             return lastOffset;
+        }
+    }
+
+    private long getOffsetAtTime(TopicPartition topicPartition, long timeSinceEpoc) {
+        synchronized (lock) {
+            KafkaConsumer consumer = getLatestOffsetConsumer();
+            Map<TopicPartition, Long> topicPartitionTimeMap = new HashMap<>();
+            topicPartitionTimeMap.put(topicPartition, timeSinceEpoc);
+            Map map = consumer.offsetsForTimes(topicPartitionTimeMap);
+            if (map.isEmpty()) {
+                throw new IllegalStateException("Unable to locate offset for time: " + timeSinceEpoc + " for topic/partition: " + topicPartition.toString());
+            }
+            consumer.unsubscribe();
+            return Long.parseLong(map.values().iterator().next().toString());
         }
     }
 
@@ -276,5 +291,26 @@ public class ClusterMonitorRunnable implements Runnable {
 
     public ClusterState getClusterState() {
         return clusterState;
+    }
+
+    public void seek(String consumerGroup, String topic, long time) {
+        refreshTopicState();
+        TopicState topicState = clusterState.getTopicState(new Topic(topic));
+        Set<Partition> partitions = topicState.getPartitions();
+        Properties properties = getProperties(consumerGroup);
+        KafkaConsumer kafkaConsumer = new KafkaConsumer(properties);
+        for (Partition partition : partitions) {
+            TopicPartition topicPartition = new TopicPartition(topic, partition.id);
+            Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
+            long offset = getOffsetAtTime(topicPartition, time);
+            kafkaConsumer.assign(topicPartitions);
+            kafkaConsumer.seek(topicPartition, offset);
+            long position = kafkaConsumer.position(topicPartition);
+            assert offset == position;
+            kafkaConsumer.poll(0);
+            kafkaConsumer.commitSync();
+            kafkaConsumer.unsubscribe();
+        }
+        kafkaConsumer.close();
     }
 }

@@ -107,8 +107,8 @@ public class KafkaResource {
                     clusterMonitorService.seekToEnd(consumerGroup, topic.getName());
                 }
                 else {
-                    throw new UnsupportedOperationException("unable to seek to: " + to);
-                    // todo support date math seeking: e.g.: -1hr, -30s, -10m, ...
+                    long timeInMs = Long.parseLong(to);
+                    clusterMonitorService.seek(consumerGroup, topic.getName(), timeInMs);
                 }
             }
 
