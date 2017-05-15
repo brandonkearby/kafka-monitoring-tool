@@ -6,10 +6,7 @@ import com.symantec.cpe.analytics.core.kafka.KafkaTopicMonitor;
 import kafka.common.OffsetAndMetadata;
 import kafka.common.OffsetMetadata;
 import kafka.coordinator.*;
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
@@ -151,17 +148,17 @@ public class ClusterMonitorRunnable implements Runnable {
         }
     }
 
-    private long getOffsetAtTime(TopicPartition topicPartition, long timeSinceEpoc) {
+    private OffsetAndTimestamp getOffsetAtTime(TopicPartition topicPartition, long timeSinceEpoc) {
         synchronized (lock) {
             KafkaConsumer consumer = getLatestOffsetConsumer();
             Map<TopicPartition, Long> topicPartitionTimeMap = new HashMap<>();
             topicPartitionTimeMap.put(topicPartition, timeSinceEpoc);
-            Map map = consumer.offsetsForTimes(topicPartitionTimeMap);
+            Map<TopicPartition, OffsetAndTimestamp> map = consumer.offsetsForTimes(topicPartitionTimeMap);
             if (map.isEmpty()) {
                 throw new IllegalStateException("Unable to locate offset for time: " + timeSinceEpoc + " for topic/partition: " + topicPartition.toString());
             }
             consumer.unsubscribe();
-            return Long.parseLong(map.values().iterator().next().toString());
+            return map.values().iterator().next();
         }
     }
 
@@ -302,11 +299,11 @@ public class ClusterMonitorRunnable implements Runnable {
         for (Partition partition : partitions) {
             TopicPartition topicPartition = new TopicPartition(topic, partition.id);
             Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
-            long offset = getOffsetAtTime(topicPartition, time);
+            OffsetAndTimestamp offsetAtTime = getOffsetAtTime(topicPartition, time);
             kafkaConsumer.assign(topicPartitions);
-            kafkaConsumer.seek(topicPartition, offset);
+            kafkaConsumer.seek(topicPartition, offsetAtTime.offset());
             long position = kafkaConsumer.position(topicPartition);
-            assert offset == position;
+            assert offsetAtTime.offset() == position;
             kafkaConsumer.poll(0);
             kafkaConsumer.commitSync();
             kafkaConsumer.unsubscribe();
