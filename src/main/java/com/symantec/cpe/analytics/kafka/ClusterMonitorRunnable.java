@@ -11,6 +11,7 @@ import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,10 +108,26 @@ public class ClusterMonitorRunnable implements Runnable {
     private void init(KafkaConsumer consumer) {
         while (true) {
             consumer.poll(0);
-            if (consumer.assignment().isEmpty()) {
+            Set<TopicPartition> assignment = consumer.assignment();
+            long dateTime = DateTime.now().minusHours(24).getMillis();
+            Map<TopicPartition, Long> timestampsToSearch = new HashMap<>();
+            for (TopicPartition topicPartition : assignment) {
+                timestampsToSearch.put(topicPartition, dateTime);
+            }
+
+            if (assignment.isEmpty()) {
                 reallySleep();
             } else {
-                consumer.seekToBeginning(consumer.assignment());
+                Map<TopicPartition, OffsetAndTimestamp> offsetsForTimes = consumer.offsetsForTimes(timestampsToSearch);
+                for (TopicPartition topicPartition : assignment) {
+                    OffsetAndTimestamp offsetAndTimestamp = offsetsForTimes.get(topicPartition);
+                    if (offsetAndTimestamp != null) {
+                        consumer.seek(topicPartition, offsetAndTimestamp.offset());
+                    }
+                    else {
+                        consumer.seekToBeginning(Collections.singleton(topicPartition));
+                    }
+                }
                 break;
             }
         }
