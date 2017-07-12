@@ -109,7 +109,7 @@ public class ClusterMonitorRunnable implements Runnable {
         while (true) {
             consumer.poll(0);
             Set<TopicPartition> assignment = consumer.assignment();
-            long dateTime = DateTime.now().minusHours(24).getMillis();
+            long dateTime = DateTime.now().minusHours(5).getMillis();
             Map<TopicPartition, Long> timestampsToSearch = new HashMap<>();
             for (TopicPartition topicPartition : assignment) {
                 timestampsToSearch.put(topicPartition, dateTime);
@@ -123,9 +123,11 @@ public class ClusterMonitorRunnable implements Runnable {
                     OffsetAndTimestamp offsetAndTimestamp = offsetsForTimes.get(topicPartition);
                     if (offsetAndTimestamp != null) {
                         consumer.seek(topicPartition, offsetAndTimestamp.offset());
+                        log.info("Seeking 5 hrs back for: " + topicPartition);
                     }
                     else {
                         consumer.seekToBeginning(Collections.singleton(topicPartition));
+                        log.info("Seeking to beginning for: " + topicPartition);
                     }
                 }
                 break;
