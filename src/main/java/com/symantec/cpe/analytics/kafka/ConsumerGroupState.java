@@ -23,7 +23,7 @@ public class ConsumerGroupState {
     }
 
     public Set<Topic> getTopics() {
-        return topicAndPartitionState.keySet();
+        return new HashSet<>(topicAndPartitionState.keySet());
     }
 
     public Map<Partition, OffsetState> getPartitionOffsetState(Topic topic) {

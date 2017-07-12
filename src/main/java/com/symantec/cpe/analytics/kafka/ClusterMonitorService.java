@@ -52,7 +52,7 @@ public class ClusterMonitorService implements Managed {
         return clusterMonitorRunnable.getClusterState();
     }
 
-    public void seek(String consumerGroup, String topic, long timeInMs) {
-        clusterMonitorRunnable.seek(consumerGroup, topic, timeInMs);
+    public List seek(String consumerGroup, String topic, long timeInMs) {
+        return clusterMonitorRunnable.seek(consumerGroup, topic, timeInMs);
     }
 }

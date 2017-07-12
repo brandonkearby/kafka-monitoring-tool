@@ -290,7 +290,8 @@ public class ClusterMonitorRunnable implements Runnable {
         return clusterState;
     }
 
-    public void seek(String consumerGroup, String topic, long time) {
+    public List seek(String consumerGroup, String topic, long time) {
+        List<Map> statuses = new ArrayList<>();
         refreshTopicState();
         TopicState topicState = clusterState.getTopicState(new Topic(topic));
         Set<Partition> partitions = topicState.getPartitions();
@@ -300,14 +301,28 @@ public class ClusterMonitorRunnable implements Runnable {
             TopicPartition topicPartition = new TopicPartition(topic, partition.id);
             Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
             OffsetAndTimestamp offsetAtTime = getOffsetAtTime(topicPartition, time);
-            kafkaConsumer.assign(topicPartitions);
-            kafkaConsumer.seek(topicPartition, offsetAtTime.offset());
-            long position = kafkaConsumer.position(topicPartition);
-            assert offsetAtTime.offset() == position;
-            kafkaConsumer.poll(0);
-            kafkaConsumer.commitSync();
-            kafkaConsumer.unsubscribe();
+            Map<String, Object> status = new LinkedHashMap<>();
+            status.put("consumerGroup", consumerGroup);
+            status.put("topic", topic);
+            status.put("time", time);
+            status.put("topicPartition", topicPartition);
+            statuses.add(status);
+            if (offsetAtTime != null) {
+                kafkaConsumer.assign(topicPartitions);
+                kafkaConsumer.seek(topicPartition, offsetAtTime.offset());
+                long position = kafkaConsumer.position(topicPartition);
+                assert offsetAtTime.offset() == position;
+                kafkaConsumer.poll(0);
+                kafkaConsumer.commitSync();
+                kafkaConsumer.unsubscribe();
+                status.put("offset", position);
+                status.put("status", "success");
+            }
+            else {
+                status.put("status", "failed. Unable to locate offset at that time");
+            }
         }
         kafkaConsumer.close();
+        return statuses;
     }
 }

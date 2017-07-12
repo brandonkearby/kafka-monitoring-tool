@@ -17,6 +17,7 @@ import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -99,6 +100,7 @@ public class KafkaResource {
                 topicSet = Sets.newHashSet(Lists.transform(Arrays.asList(selectedTopics), STRING_TO_TOPIC_FUNCTION));
             }
 
+            List messages = new ArrayList();
             for (Topic topic : topicSet) {
                 if (SeekTo.beginning.name().equalsIgnoreCase(to)) {
                     clusterMonitorService.seekToBeginning(consumerGroup, topic.getName());
@@ -108,11 +110,13 @@ public class KafkaResource {
                 }
                 else {
                     long timeInMs = Long.parseLong(to);
-                    clusterMonitorService.seek(consumerGroup, topic.getName(), timeInMs);
+                    messages = clusterMonitorService.seek(consumerGroup, topic.getName(), timeInMs);
                 }
             }
 
-            return Response.status(Response.Status.OK).type(responseType).build();
+            return Response.status(Response.Status.OK).type(responseType)
+                    .entity(messages)
+                    .build();
         } catch (Exception e) {
             LOG.error(e.getMessage(), e);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(new ResponseMessage(e.getLocalizedMessage())).type(responseType).build();

@@ -1,9 +1,6 @@
 package com.symantec.cpe.analytics.kafka;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Brandon Kearby
@@ -14,11 +11,11 @@ public class ClusterState {
     private Map<Topic, TopicState> topicState = new HashMap<>();
 
     public Set<Topic> getTopics() {
-        return topicState.keySet();
+        return new HashSet<>(topicState.keySet());
     }
 
     public Set<ConsumerGroup> getConsumerGroups() {
-        return groupState.keySet();
+        return new HashSet<>(groupState.keySet());
     }
 
     public ConsumerGroupState get(ConsumerGroup consumerGroup) {

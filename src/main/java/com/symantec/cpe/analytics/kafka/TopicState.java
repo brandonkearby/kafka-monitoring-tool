@@ -1,9 +1,6 @@
 package com.symantec.cpe.analytics.kafka;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author Brandon Kearby
@@ -27,7 +24,7 @@ public class TopicState {
     }
 
     public Set<Partition> getPartitions() {
-        return firstOffsets.keySet();
+        return new HashSet<>(firstOffsets.keySet());
     }
 
     public Long getFirstOffset(Partition partition) {
