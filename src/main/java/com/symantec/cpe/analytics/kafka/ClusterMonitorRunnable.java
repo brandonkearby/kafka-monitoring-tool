@@ -324,7 +324,7 @@ public class ClusterMonitorRunnable implements Runnable {
             status.put("consumerGroup", consumerGroup);
             status.put("topic", topic);
             status.put("time", time);
-            status.put("topicPartition", topicPartition);
+            status.put("topicPartition", topicPartition.toString());
             statuses.add(status);
             if (offsetAtTime != null) {
                 kafkaConsumer.assign(topicPartitions);
