@@ -46,7 +46,8 @@ public class TopicState {
     private TopicPartitionState getOrCreateTopicPartitionState(Partition partition) {
         TopicPartitionState topicPartitionState = partitionTopicStateMap.get(partition);
         if (topicPartitionState == null) {
-            topicPartitionState = partitionTopicStateMap.put(partition, new TopicPartitionState());
+            topicPartitionState = new TopicPartitionState();
+            partitionTopicStateMap.put(partition, topicPartitionState);
         }
         return topicPartitionState;
     }
