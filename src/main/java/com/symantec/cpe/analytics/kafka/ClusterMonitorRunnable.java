@@ -175,11 +175,12 @@ public class ClusterMonitorRunnable implements Runnable {
             Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
             consumer.assign(topicPartitionSet);
             consumer.seekToBeginning(topicPartitionSet);
-            List<ConsumerRecords<?,?>> records = consumer.poll(POLL_TIMEOUT).records(topicPartition);
-            if (records.isEmpty()) {
+            ConsumerRecords consumerRecords = consumer.poll(POLL_TIMEOUT);
+            if (consumerRecords.isEmpty()) {
                 throw new IllegalStateException("Unable to locate beginning records for topicPartition: " + topicPartition);
             }
-            long timestamp = records.iterator().next().iterator().next().timestamp();
+            List records = consumerRecords.records(topicPartition);
+            long timestamp = ((ConsumerRecord)records.get(0)).timestamp();
             consumer.unsubscribe();
             return timestamp;
         }
@@ -191,11 +192,12 @@ public class ClusterMonitorRunnable implements Runnable {
             Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
             consumer.assign(topicPartitionSet);
             consumer.seek(topicPartition, lastCommitedOffset);
-            List<ConsumerRecords<?,?>> records = consumer.poll(POLL_TIMEOUT).records(topicPartition);
-            if (records.isEmpty()) {
+            ConsumerRecords consumerRecords = consumer.poll(POLL_TIMEOUT);
+            if (consumerRecords.isEmpty()) {
                 throw new IllegalStateException("Unable to locate beginning records for topicPartition: " + topicPartition);
             }
-            long timestamp = records.iterator().next().iterator().next().timestamp();
+            List records = consumerRecords.records(topicPartition);
+            long timestamp = ((ConsumerRecord)records.get(0)).timestamp();
             consumer.unsubscribe();
             return timestamp;
         }
