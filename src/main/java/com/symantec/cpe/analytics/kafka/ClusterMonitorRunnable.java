@@ -266,19 +266,21 @@ public class ClusterMonitorRunnable implements Runnable {
     }
 
     private void refreshTopicState() {
-        KafkaConsumer latestOffsetConsumer = getLatestOffsetConsumer();
-        Map<String, List<PartitionInfo>> topics = latestOffsetConsumer.listTopics();
-        for (Map.Entry<String, List<PartitionInfo>> entry : topics.entrySet()) {
-            List<PartitionInfo> partitionInfos = entry.getValue();
-            for (PartitionInfo partitionInfo : partitionInfos) {
-                Topic topic = new Topic(entry.getKey());
-                Partition partition = new Partition(partitionInfo.partition());
-                TopicPartition topicPartition = new TopicPartition(topic.getName(), partition.id);
-                long firstOffset = getFirstOffset(topicPartition);
-                Long firstOffsetTime = getFirstOffsetTime(topicPartition);
-                long lastOffset = getLastOffset(topicPartition);
-                Long lastOffsetTime = getLastOffsetTime(topicPartition);
-                this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset, firstOffsetTime, lastOffsetTime);
+        synchronized (lock) {
+            KafkaConsumer latestOffsetConsumer = getLatestOffsetConsumer();
+            Map<String, List<PartitionInfo>> topics = latestOffsetConsumer.listTopics();
+            for (Map.Entry<String, List<PartitionInfo>> entry : topics.entrySet()) {
+                List<PartitionInfo> partitionInfos = entry.getValue();
+                for (PartitionInfo partitionInfo : partitionInfos) {
+                    Topic topic = new Topic(entry.getKey());
+                    Partition partition = new Partition(partitionInfo.partition());
+                    TopicPartition topicPartition = new TopicPartition(topic.getName(), partition.id);
+                    long firstOffset = getFirstOffset(topicPartition);
+                    Long firstOffsetTime = getFirstOffsetTime(topicPartition);
+                    long lastOffset = getLastOffset(topicPartition);
+                    Long lastOffsetTime = getLastOffsetTime(topicPartition);
+                    this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset, firstOffsetTime, lastOffsetTime);
+                }
             }
         }
     }
