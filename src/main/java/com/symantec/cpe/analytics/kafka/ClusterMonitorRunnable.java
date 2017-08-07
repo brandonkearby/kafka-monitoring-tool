@@ -27,7 +27,7 @@ public class ClusterMonitorRunnable implements Runnable {
 
     private static final String CONSUMER_OFFSETS_TOPIC = "__consumer_offsets";
     private static final byte[] lock = new byte[0];
-    public static final long POLL_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
+    public static final long POLL_TIMEOUT = TimeUnit.SECONDS.toMillis(5);
 
     private boolean running;
     private KafkaMonitorConfiguration kafkaMonitorConfiguration;
