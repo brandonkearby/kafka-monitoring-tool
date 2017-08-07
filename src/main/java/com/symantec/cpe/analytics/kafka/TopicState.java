@@ -9,14 +9,20 @@ import java.util.*;
 public class TopicState {
 
     private Topic topic;
-    private Map<Partition, Long> firstOffsets;
-    private Map<Partition, Long> lastOffsets;
+    private Map<Partition, TopicPartitionState> partitionTopicStateMap;
+
+
+    private static class TopicPartitionState {
+        Long firstOffset;
+        Long lastOffset;
+        Long firstOffsetTime;
+        Long lastOffsetTime;
+    }
 
     public TopicState(Topic topic) {
         Objects.requireNonNull(topic, "Topic can't be null");
         this.topic = topic;
-        firstOffsets = new TreeMap<>();
-        lastOffsets = new TreeMap<>();
+        partitionTopicStateMap = new TreeMap<>();
     }
 
     public Topic getTopic() {
@@ -24,28 +30,57 @@ public class TopicState {
     }
 
     public Set<Partition> getPartitions() {
-        return new HashSet<>(firstOffsets.keySet());
+        return new HashSet<>(partitionTopicStateMap.keySet());
     }
 
     public Long getFirstOffset(Partition partition) {
         Objects.requireNonNull(partition, "Partition can't be null");
-        return firstOffsets.get(partition);
+        return getOrCreateTopicPartitionState(partition).firstOffset;
+    }
+
+    public Long getFirstOffsetTime(Partition partition) {
+        Objects.requireNonNull(partition, "Partition can't be null");
+        return getOrCreateTopicPartitionState(partition).firstOffsetTime;
+    }
+
+    private TopicPartitionState getOrCreateTopicPartitionState(Partition partition) {
+        TopicPartitionState topicPartitionState = partitionTopicStateMap.get(partition);
+        if (topicPartitionState == null) {
+            topicPartitionState = partitionTopicStateMap.put(partition, new TopicPartitionState());
+        }
+        return topicPartitionState;
     }
 
     public void setFirstOffset(Partition partition, Long offset) {
         Objects.requireNonNull(partition, "Partition can't be null");
         Objects.requireNonNull(offset, "Offset can't be null");
-        firstOffsets.put(partition, offset);
+        getOrCreateTopicPartitionState(partition).firstOffset = offset;
     }
 
     public void setLastOffset(Partition partition, Long lastOffset) {
         Objects.requireNonNull(partition, "Partition can't be null");
         Objects.requireNonNull(lastOffset, "Offset can't be null");
-        lastOffsets.put(partition, lastOffset);
+        getOrCreateTopicPartitionState(partition).lastOffset = lastOffset;
+    }
+    public void setFirstOffsetTime(Partition partition, Long offset) {
+        Objects.requireNonNull(partition, "Partition can't be null");
+        Objects.requireNonNull(offset, "Offset can't be null");
+        getOrCreateTopicPartitionState(partition).firstOffsetTime = offset;
+    }
+
+    public void setLastOffsetTime(Partition partition, Long lastOffset) {
+        Objects.requireNonNull(partition, "Partition can't be null");
+        Objects.requireNonNull(lastOffset, "Offset can't be null");
+        getOrCreateTopicPartitionState(partition).lastOffsetTime = lastOffset;
     }
 
     public Long getLastOffset(Partition partition) {
         Objects.requireNonNull(partition, "Partition can't be null");
-        return lastOffsets.get(partition);
+        return getOrCreateTopicPartitionState(partition).lastOffset;
+    }
+
+    public Long getLastOffsetTime(Partition partition) {
+        Objects.requireNonNull(partition, "Partition can't be null");
+        return getOrCreateTopicPartitionState(partition).lastOffsetTime;
     }
 }

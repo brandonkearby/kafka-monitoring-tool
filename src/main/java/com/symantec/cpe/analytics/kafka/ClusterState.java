@@ -27,7 +27,7 @@ public class ClusterState {
         groupState.put(consumerGroup, consumerGroupState);
     }
 
-    public void setTopicState(Topic topic, Partition partition, Long firstOffset, Long lastOffset) {
+    public void setTopicState(Topic topic, Partition partition, Long firstOffset, Long lastOffset, Long firstOffsetTime, Long lastOffsetTime) {
         Objects.requireNonNull(topic, "Topic can't be null");
         Objects.requireNonNull(partition, "Partition can't be null");
         Objects.requireNonNull(firstOffset, "Offset can't be null");
@@ -39,6 +39,8 @@ public class ClusterState {
         }
         ts.setFirstOffset(partition, firstOffset);
         ts.setLastOffset(partition, lastOffset);
+        ts.setFirstOffsetTime(partition, firstOffsetTime);
+        ts.setLastOffsetTime(partition, lastOffsetTime);
     }
 
     public TopicState getTopicState(Topic topic) {

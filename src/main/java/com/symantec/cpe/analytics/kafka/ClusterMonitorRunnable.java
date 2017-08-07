@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Brandon Kearby
@@ -26,6 +27,7 @@ public class ClusterMonitorRunnable implements Runnable {
 
     private static final String CONSUMER_OFFSETS_TOPIC = "__consumer_offsets";
     private static final byte[] lock = new byte[0];
+    public static final long POLL_TIMEOUT = TimeUnit.SECONDS.toMillis(60);
 
     private boolean running;
     private KafkaMonitorConfiguration kafkaMonitorConfiguration;
@@ -167,6 +169,38 @@ public class ClusterMonitorRunnable implements Runnable {
         }
     }
 
+    private long getFirstOffsetTime(TopicPartition topicPartition) {
+        synchronized (lock) {
+            KafkaConsumer consumer = getLatestOffsetConsumer();
+            Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
+            consumer.assign(topicPartitionSet);
+            consumer.seekToBeginning(topicPartitionSet);
+            List<ConsumerRecords<?,?>> records = consumer.poll(POLL_TIMEOUT).records(topicPartition);
+            if (records.isEmpty()) {
+                throw new IllegalStateException("Unable to locate beginning records for topicPartition: " + topicPartition);
+            }
+            long timestamp = records.iterator().next().iterator().next().timestamp();
+            consumer.unsubscribe();
+            return timestamp;
+        }
+    }
+    private long getLastOffsetTime(TopicPartition topicPartition) {
+        long lastCommitedOffset = getLastOffset(topicPartition) - 1;
+        synchronized (lock) {
+            KafkaConsumer consumer = getLatestOffsetConsumer();
+            Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
+            consumer.assign(topicPartitionSet);
+            consumer.seek(topicPartition, lastCommitedOffset);
+            List<ConsumerRecords<?,?>> records = consumer.poll(POLL_TIMEOUT).records(topicPartition);
+            if (records.isEmpty()) {
+                throw new IllegalStateException("Unable to locate beginning records for topicPartition: " + topicPartition);
+            }
+            long timestamp = records.iterator().next().iterator().next().timestamp();
+            consumer.unsubscribe();
+            return timestamp;
+        }
+    }
+
     private OffsetAndTimestamp getOffsetAtTime(TopicPartition topicPartition, long timeSinceEpoc) {
         synchronized (lock) {
             KafkaConsumer consumer = getLatestOffsetConsumer();
@@ -239,8 +273,10 @@ public class ClusterMonitorRunnable implements Runnable {
                 Partition partition = new Partition(partitionInfo.partition());
                 TopicPartition topicPartition = new TopicPartition(topic.getName(), partition.id);
                 long firstOffset = getFirstOffset(topicPartition);
+                long firstOffsetTime = getFirstOffsetTime(topicPartition);
                 long lastOffset = getLastOffset(topicPartition);
-                this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset);
+                long lastOffsetTime = getLastOffsetTime(topicPartition);
+                this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset, firstOffsetTime, lastOffsetTime);
             }
         }
     }
@@ -260,8 +296,10 @@ public class ClusterMonitorRunnable implements Runnable {
             Set<Partition> partitions = topicState.getPartitions();
             for (Partition partition : partitions) {
                 Long firstOffset = topicState.getFirstOffset(partition);
+                Long firstOffsetTime = topicState.getFirstOffsetTime(partition);
                 Long lastOffset = topicState.getLastOffset(partition);
-                kafkaTopicMonitors.add(new KafkaTopicMonitor(topic.getName(), partition.id, firstOffset, lastOffset, lastOffset - firstOffset));
+                Long lastOffsetTime = topicState.getLastOffsetTime(partition);
+                kafkaTopicMonitors.add(new KafkaTopicMonitor(topic.getName(), partition.id, firstOffset, firstOffsetTime, lastOffset, lastOffsetTime, lastOffset - firstOffset));
             }
         }
         return kafkaTopicMonitors;
