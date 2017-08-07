@@ -186,7 +186,7 @@ public class ClusterMonitorRunnable implements Runnable {
         }
     }
     private Long getLastOffsetTime(TopicPartition topicPartition) {
-        long lastCommitedOffset = getLastOffset(topicPartition) - 1;
+        long lastCommitedOffset = Math.max(getLastOffset(topicPartition) - 1, 0);
         synchronized (lock) {
             KafkaConsumer consumer = getLatestOffsetConsumer();
             Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
