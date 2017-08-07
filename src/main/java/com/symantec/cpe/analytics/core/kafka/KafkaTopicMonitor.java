@@ -9,15 +9,15 @@ import org.joda.time.DateTime;
 public class KafkaTopicMonitor {
     private String topic;
     private Integer partition;
-    private long firstOffset;
-    private long lastOffset;
+    private Long firstOffset;
+    private Long lastOffset;
     private Long firstOffsetTime;
     private String firstOffsetTimePretty;
     private Long lastOffsetTime;
     private String lastOffsetTimePretty;
-    private long logSize;
+    private Long logSize;
 
-    public KafkaTopicMonitor(String topic, Integer partition, long firstOffset, Long firstOffsetTime, long lastOffset, Long lastOffsetTime, long logSize) {
+    public KafkaTopicMonitor(String topic, Integer partition, Long firstOffset, Long firstOffsetTime, Long lastOffset, Long lastOffsetTime, Long logSize) {
         this.topic = topic;
         this.partition = partition;
         this.firstOffset = firstOffset;
@@ -45,35 +45,35 @@ public class KafkaTopicMonitor {
         this.partition = partition;
     }
 
-    public long getFirstOffset() {
+    public Long getFirstOffset() {
         return firstOffset;
     }
 
-    public void setFirstOffset(long firstOffset) {
+    public void setFirstOffset(Long firstOffset) {
         this.firstOffset = firstOffset;
     }
 
-    public long getLastOffset() {
+    public Long getLastOffset() {
         return lastOffset;
     }
 
-    public void setLastOffset(long lastOffset) {
+    public void setLastOffset(Long lastOffset) {
         this.lastOffset = lastOffset;
     }
 
-    public long getLogSize() {
+    public Long getLogSize() {
         return logSize;
     }
 
-    public void setLogSize(long logSize) {
+    public void setLogSize(Long logSize) {
         this.logSize = logSize;
     }
 
-    public long getFirstOffsetTime() {
+    public Long getFirstOffsetTime() {
         return firstOffsetTime;
     }
 
-    public void setFirstOffsetTime(long firstOffsetTime) {
+    public void setFirstOffsetTime(Long firstOffsetTime) {
         this.firstOffsetTime = firstOffsetTime;
     }
 
@@ -85,11 +85,11 @@ public class KafkaTopicMonitor {
         this.firstOffsetTimePretty = firstOffsetTimePretty;
     }
 
-    public long getLastOffsetTime() {
+    public Long getLastOffsetTime() {
         return lastOffsetTime;
     }
 
-    public void setLastOffsetTime(long lastOffsetTime) {
+    public void setLastOffsetTime(Long lastOffsetTime) {
         this.lastOffsetTime = lastOffsetTime;
     }
 
