@@ -65,13 +65,11 @@ public class TopicState {
     }
     public void setFirstOffsetTime(Partition partition, Long offset) {
         Objects.requireNonNull(partition, "Partition can't be null");
-        Objects.requireNonNull(offset, "Offset can't be null");
         getOrCreateTopicPartitionState(partition).firstOffsetTime = offset;
     }
 
     public void setLastOffsetTime(Partition partition, Long lastOffset) {
         Objects.requireNonNull(partition, "Partition can't be null");
-        Objects.requireNonNull(lastOffset, "Offset can't be null");
         getOrCreateTopicPartitionState(partition).lastOffsetTime = lastOffset;
     }
 
