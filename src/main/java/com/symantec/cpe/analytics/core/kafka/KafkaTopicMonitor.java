@@ -11,13 +11,13 @@ public class KafkaTopicMonitor {
     private Integer partition;
     private long firstOffset;
     private long lastOffset;
-    private long firstOffsetTime;
+    private Long firstOffsetTime;
     private String firstOffsetTimePretty;
-    private long lastOffsetTime;
+    private Long lastOffsetTime;
     private String lastOffsetTimePretty;
     private long logSize;
 
-    public KafkaTopicMonitor(String topic, Integer partition, long firstOffset, long firstOffsetTime, long lastOffset, long lastOffsetTime, long logSize) {
+    public KafkaTopicMonitor(String topic, Integer partition, long firstOffset, Long firstOffsetTime, long lastOffset, Long lastOffsetTime, long logSize) {
         this.topic = topic;
         this.partition = partition;
         this.firstOffset = firstOffset;
@@ -25,8 +25,8 @@ public class KafkaTopicMonitor {
         this.lastOffset = lastOffset;
         this.lastOffsetTime = lastOffsetTime;
         this.logSize = logSize;
-        this.firstOffsetTimePretty = new DateTime(this.firstOffsetTime).toString();
-        this.lastOffsetTimePretty = new DateTime(this.lastOffsetTime).toString();
+        this.firstOffsetTimePretty = firstOffsetTime != null ? new DateTime(this.firstOffsetTime).toString() : "unknown";
+        this.lastOffsetTimePretty = lastOffsetTime != null ? new DateTime(this.lastOffsetTime).toString() : "unknown";
     }
 
     public String getTopic() {

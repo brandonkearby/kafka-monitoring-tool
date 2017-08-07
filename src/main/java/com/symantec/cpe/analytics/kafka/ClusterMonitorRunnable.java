@@ -169,7 +169,7 @@ public class ClusterMonitorRunnable implements Runnable {
         }
     }
 
-    private long getFirstOffsetTime(TopicPartition topicPartition) {
+    private Long getFirstOffsetTime(TopicPartition topicPartition) {
         synchronized (lock) {
             KafkaConsumer consumer = getLatestOffsetConsumer();
             Set<TopicPartition> topicPartitionSet = Collections.singleton(topicPartition);
@@ -177,7 +177,7 @@ public class ClusterMonitorRunnable implements Runnable {
             consumer.seekToBeginning(topicPartitionSet);
             ConsumerRecords consumerRecords = consumer.poll(POLL_TIMEOUT);
             if (consumerRecords.isEmpty()) {
-                throw new IllegalStateException("Unable to locate beginning records for topicPartition: " + topicPartition);
+                return null;
             }
             List records = consumerRecords.records(topicPartition);
             long timestamp = ((ConsumerRecord)records.get(0)).timestamp();
@@ -185,7 +185,7 @@ public class ClusterMonitorRunnable implements Runnable {
             return timestamp;
         }
     }
-    private long getLastOffsetTime(TopicPartition topicPartition) {
+    private Long getLastOffsetTime(TopicPartition topicPartition) {
         long lastCommitedOffset = getLastOffset(topicPartition) - 1;
         synchronized (lock) {
             KafkaConsumer consumer = getLatestOffsetConsumer();
@@ -194,7 +194,7 @@ public class ClusterMonitorRunnable implements Runnable {
             consumer.seek(topicPartition, lastCommitedOffset);
             ConsumerRecords consumerRecords = consumer.poll(POLL_TIMEOUT);
             if (consumerRecords.isEmpty()) {
-                throw new IllegalStateException("Unable to locate beginning records for topicPartition: " + topicPartition);
+                return null;
             }
             List records = consumerRecords.records(topicPartition);
             long timestamp = ((ConsumerRecord)records.get(0)).timestamp();
@@ -275,9 +275,9 @@ public class ClusterMonitorRunnable implements Runnable {
                 Partition partition = new Partition(partitionInfo.partition());
                 TopicPartition topicPartition = new TopicPartition(topic.getName(), partition.id);
                 long firstOffset = getFirstOffset(topicPartition);
-                long firstOffsetTime = getFirstOffsetTime(topicPartition);
+                Long firstOffsetTime = getFirstOffsetTime(topicPartition);
                 long lastOffset = getLastOffset(topicPartition);
-                long lastOffsetTime = getLastOffsetTime(topicPartition);
+                Long lastOffsetTime = getLastOffsetTime(topicPartition);
                 this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset, firstOffsetTime, lastOffsetTime);
             }
         }
