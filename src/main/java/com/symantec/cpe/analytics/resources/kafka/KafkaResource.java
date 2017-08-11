@@ -103,10 +103,10 @@ public class KafkaResource {
             List messages = new ArrayList();
             for (Topic topic : topicSet) {
                 if (SeekTo.beginning.name().equalsIgnoreCase(to)) {
-                    clusterMonitorService.seekToBeginning(consumerGroup, topic.getName());
+                    messages = clusterMonitorService.seekToBeginning(consumerGroup, topic.getName());
                 }
                 else if (SeekTo.end.name().equalsIgnoreCase(to)) {
-                    clusterMonitorService.seekToEnd(consumerGroup, topic.getName());
+                    messages = clusterMonitorService.seekToEnd(consumerGroup, topic.getName());
                 }
                 else {
                     long timeInMs = Long.parseLong(to);

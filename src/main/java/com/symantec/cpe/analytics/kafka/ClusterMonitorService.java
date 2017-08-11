@@ -1,11 +1,15 @@
 package com.symantec.cpe.analytics.kafka;
 
+import com.google.common.collect.Lists;
 import com.symantec.cpe.analytics.KafkaMonitorConfiguration;
+import com.symantec.cpe.analytics.core.kafka.KafkaConsumerLag;
 import com.symantec.cpe.analytics.core.kafka.KafkaOffsetMonitor;
 import com.symantec.cpe.analytics.core.kafka.KafkaTopicMonitor;
 import io.dropwizard.lifecycle.Managed;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -40,12 +44,12 @@ public class ClusterMonitorService implements Managed {
         return clusterMonitorRunnable.getKafkaTopicMonitors();
     }
 
-    public void seekToBeginning(String consumerGroup, String topic) {
-        clusterMonitorRunnable.seekToBeginning(consumerGroup, topic);
+    public List seekToBeginning(String consumerGroup, String topic) {
+        return clusterMonitorRunnable.seekToBeginning(consumerGroup, topic);
     }
 
-    public void seekToEnd(String consumerGroup, String topic) {
-        clusterMonitorRunnable.seekToEnd(consumerGroup, topic);
+    public List seekToEnd(String consumerGroup, String topic) {
+        return clusterMonitorRunnable.seekToEnd(consumerGroup, topic);
     }
 
     public ClusterState getClusterState() {

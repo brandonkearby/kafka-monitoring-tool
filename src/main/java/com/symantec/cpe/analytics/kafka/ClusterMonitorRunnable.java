@@ -276,9 +276,9 @@ public class ClusterMonitorRunnable implements Runnable {
                     Partition partition = new Partition(partitionInfo.partition());
                     TopicPartition topicPartition = new TopicPartition(topic.getName(), partition.id);
                     long firstOffset = getFirstOffset(topicPartition);
-                    Long firstOffsetTime = getFirstOffsetTime(topicPartition);
+                    Long firstOffsetTime = null; //getFirstOffsetTime(topicPartition);
                     long lastOffset = getLastOffset(topicPartition);
-                    Long lastOffsetTime = getLastOffsetTime(topicPartition);
+                    Long lastOffsetTime = null; //getLastOffsetTime(topicPartition);
                     this.clusterState.setTopicState(topic, partition, firstOffset, lastOffset, firstOffsetTime, lastOffsetTime);
                 }
             }
@@ -309,7 +309,8 @@ public class ClusterMonitorRunnable implements Runnable {
         return kafkaTopicMonitors;
     }
 
-    public void seekToBeginning(String consumerGroup, String topic) {
+    public List<Map> seekToBeginning(String consumerGroup, String topic) {
+        List<Map> statuses = new ArrayList<>();
         refreshTopicState();
         TopicState topicState = clusterState.getTopicState(new Topic(topic));
         Set<Partition> partitions = topicState.getPartitions();
@@ -320,15 +321,21 @@ public class ClusterMonitorRunnable implements Runnable {
             Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
             kafkaConsumer.assign(topicPartitions);
             kafkaConsumer.seekToBeginning(topicPartitions);
-            kafkaConsumer.position(topicPartition);
+            long position = kafkaConsumer.position(topicPartition);
             kafkaConsumer.poll(0);
             kafkaConsumer.commitSync();
             kafkaConsumer.unsubscribe();
+            Map<String, Object> status;
+            status = makeStatus(consumerGroup, topic, topicPartition, position);
+            statuses.add(status);
+
         }
         kafkaConsumer.close();
+        return statuses;
     }
 
-    public void seekToEnd(String consumerGroup, String topic) {
+    public List<Map> seekToEnd(String consumerGroup, String topic) {
+        List<Map> statuses = new ArrayList<>();
         refreshTopicState();
         TopicState topicState = clusterState.getTopicState(new Topic(topic));
         Set<Partition> partitions = topicState.getPartitions();
@@ -339,12 +346,28 @@ public class ClusterMonitorRunnable implements Runnable {
             Set<TopicPartition> topicPartitions = Collections.singleton(topicPartition);
             kafkaConsumer.assign(topicPartitions);
             kafkaConsumer.seekToEnd(topicPartitions);
-            kafkaConsumer.position(topicPartition);
+            long position = kafkaConsumer.position(topicPartition);
             kafkaConsumer.poll(0);
             kafkaConsumer.commitSync();
             kafkaConsumer.unsubscribe();
+
+            Map<String, Object> status;
+            status = makeStatus(consumerGroup, topic, topicPartition, position);
+            statuses.add(status);
+
         }
         kafkaConsumer.close();
+
+        return statuses;
+    }
+
+    private Map<String, Object> makeStatus(String consumerGroup, String topic, TopicPartition topicPartition, long position) {
+        Map<String, Object> status = new LinkedHashMap<>();
+        status.put("consumerGroup", consumerGroup);
+        status.put("topic", topic);
+        status.put("topicPartition", topicPartition.toString());
+        status.put("offset", position);
+        return status;
     }
 
     public ClusterState getClusterState() {
