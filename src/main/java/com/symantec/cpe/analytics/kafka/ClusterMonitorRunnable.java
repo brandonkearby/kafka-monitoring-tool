@@ -285,15 +285,15 @@ public class ClusterMonitorRunnable implements Runnable {
         }
     }
 
-    public List<KafkaTopicMonitor> getKafkaTopicMonitors() {
+    public List<KafkaTopicMonitor> getKafkaTopicMonitors(Topic topic) {
         refreshTopicState();
         List<KafkaTopicMonitor> kafkaTopicMonitors = new ArrayList<>();
-        Set<Topic> topics = this.clusterState.getTopics();
-        for (Topic topic : topics) {
-            if (topic.getName().equals(CONSUMER_OFFSETS_TOPIC)) {
+        Set<Topic> topics = "_all".equals(topic.getName()) ? this.clusterState.getTopics() : Collections.singleton(topic);
+        for (Topic t : topics) {
+            if (t.getName().equals(CONSUMER_OFFSETS_TOPIC)) {
                 continue;
             }
-            TopicState topicState = this.clusterState.getTopicState(topic);
+            TopicState topicState = this.clusterState.getTopicState(t);
             if (topicState == null) {
                 continue;
             }
@@ -303,7 +303,7 @@ public class ClusterMonitorRunnable implements Runnable {
                 Long firstOffsetTime = topicState.getFirstOffsetTime(partition);
                 Long lastOffset = topicState.getLastOffset(partition);
                 Long lastOffsetTime = topicState.getLastOffsetTime(partition);
-                kafkaTopicMonitors.add(new KafkaTopicMonitor(topic.getName(), partition.id, firstOffset, firstOffsetTime, lastOffset, lastOffsetTime, lastOffset - firstOffset));
+                kafkaTopicMonitors.add(new KafkaTopicMonitor(t.getName(), partition.id, firstOffset, firstOffsetTime, lastOffset, lastOffsetTime, lastOffset - firstOffset));
             }
         }
         return kafkaTopicMonitors;

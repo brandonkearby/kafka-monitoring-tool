@@ -1,18 +1,15 @@
 package com.symantec.cpe.analytics.core.kafka;
 
-import java.util.List;
+import java.io.Serializable;
 
-public class KafkaConsumerLag {
-    String consumerGroupName;
-    String topic;
-    long lag;
+public class KafkaConsumerLag implements Serializable {
+    private String consumerGroupName;
+    private String topic;
+    private long lag;
 
-    public KafkaConsumerLag(List<KafkaOffsetMonitor> kafkaOffsetMonitors) {
-        for (KafkaOffsetMonitor kafkaOffsetMonitor : kafkaOffsetMonitors) {
-            consumerGroupName = kafkaOffsetMonitor.consumerGroupName;
-            topic = kafkaOffsetMonitor.topic;
-            lag += kafkaOffsetMonitor.lag;
-        }
+    public KafkaConsumerLag(String consumerGroupName, String topic) {
+        this.consumerGroupName = consumerGroupName;
+        this.topic = topic;
     }
 
     public String getConsumerGroupName() {
@@ -37,5 +34,23 @@ public class KafkaConsumerLag {
 
     public void setLag(long lag) {
         this.lag = lag;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        KafkaConsumerLag that = (KafkaConsumerLag) o;
+
+        if (!consumerGroupName.equals(that.consumerGroupName)) return false;
+        return topic.equals(that.topic);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = consumerGroupName.hashCode();
+        result = 31 * result + topic.hashCode();
+        return result;
     }
 }
