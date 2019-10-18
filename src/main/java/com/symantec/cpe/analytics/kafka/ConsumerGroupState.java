@@ -32,11 +32,7 @@ public class ConsumerGroupState {
 
     public void set(TopicPartition topicPartition, OffsetAndMetadata consumerOffset) {
         Topic topic = new Topic(topicPartition.topic());
-        Map<Partition, OffsetState> consumerTopicAndPartitionStates = topicAndPartitionState.get(topic);
-        if (consumerTopicAndPartitionStates == null) {
-            consumerTopicAndPartitionStates = new TreeMap<>();
-            topicAndPartitionState.put(topic, consumerTopicAndPartitionStates);
-        }
+        Map<Partition, OffsetState> consumerTopicAndPartitionStates = topicAndPartitionState.computeIfAbsent(topic, k -> new TreeMap<>());
         Partition partition = new Partition(topicPartition.partition());
         consumerTopicAndPartitionStates.put(partition, new OffsetState(consumerOffset));
     }

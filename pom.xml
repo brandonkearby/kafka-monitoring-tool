@@ -17,7 +17,7 @@
         <hadoop.version>2.2.0.2.0.10.0-1</hadoop.version>
         <oozie.version>4.0.0.2.1.4.0-632</oozie.version>
         <yarn.version>2.4.0</yarn.version>
-        <kafka.version>0.10.1.1</kafka.version>
+        <kafka.version>2.3.0</kafka.version>
         <curator-framework.version>2.7.0</curator-framework.version>
         <statsd.client.version>3.0.1</statsd.client.version>
         <commons.lang3.version>3.3.2</commons.lang3.version>

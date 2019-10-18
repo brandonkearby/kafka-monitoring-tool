@@ -4,20 +4,20 @@ import com.symantec.cpe.analytics.KafkaMonitorConfiguration;
 import com.symantec.cpe.analytics.core.kafka.KafkaOffsetMonitor;
 import com.symantec.cpe.analytics.core.kafka.KafkaTopicMonitor;
 import kafka.common.OffsetAndMetadata;
-import kafka.common.OffsetMetadata;
-import kafka.coordinator.*;
+import kafka.coordinator.group.*;
 import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.PartitionInfo;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.ByteBufferDeserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.utils.Time;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Brandon Kearby
@@ -64,7 +64,7 @@ public class ClusterMonitorRunnable implements Runnable {
                 BaseKey baseKey = GroupMetadataManager.readMessageKey(record.key());
                 if (baseKey instanceof GroupMetadataKey) {
                     GroupMetadataKey groupMetadataKey = (GroupMetadataKey) baseKey;
-                    GroupMetadata groupMetadata = GroupMetadataManager.readGroupMessageValue(baseKey.toString(), record.value());
+                    GroupMetadata groupMetadata = GroupMetadataManager.readGroupMessageValue(baseKey.toString(), record.value(), Time.SYSTEM);
                     if (groupMetadata != null && !KafkaMonitorConfiguration.MONITORING_KAFKA_GROUP.equals(groupMetadata.groupId())) {
                         //todo handle manual removal of consumer groups
                         log.debug("groupMetadataKey = " + groupMetadataKey);
@@ -88,7 +88,9 @@ public class ClusterMonitorRunnable implements Runnable {
                         clusterState.setConsumerGroupState(consumerGroup, consumerGroupState);
                     }
                     if (offsetAndMetadata == null) {
-                        offsetAndMetadata = new OffsetAndMetadata(new OffsetMetadata(getFirstOffset(groupTopicPartition.topicPartition()), ""), 0,0);
+                        offsetAndMetadata = new OffsetAndMetadata(getFirstOffset(groupTopicPartition.topicPartition()), Optional.empty(), "",
+                                Optional.ofNullable(getFirstOffsetTime(groupTopicPartition.topicPartition())).orElse(0L),
+                                Option.empty());
                     }
                     log.debug("offsetAndMetadata = " + offsetAndMetadata);
                     log.debug("consumerGroupState = " + consumerGroupState);
