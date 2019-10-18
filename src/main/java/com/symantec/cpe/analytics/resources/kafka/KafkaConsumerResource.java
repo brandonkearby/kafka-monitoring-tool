@@ -6,7 +6,7 @@ import com.symantec.cpe.analytics.core.ResponseMessage;
 import com.symantec.cpe.analytics.core.kafka.KafkaConsumerLag;
 import com.symantec.cpe.analytics.core.kafka.KafkaOffsetMonitor;
 import com.symantec.cpe.analytics.kafka.*;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
