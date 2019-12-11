@@ -2,6 +2,7 @@ package com.symantec.cpe.analytics;
 
 import com.symantec.cpe.analytics.kafka.ClusterMonitorService;
 import com.symantec.cpe.analytics.kafka.ClusterState;
+import com.symantec.cpe.analytics.resources.kafka.KafkaConsumerResource;
 import com.symantec.cpe.analytics.resources.kafka.KafkaResource;
 
 import io.dropwizard.Application;
@@ -20,8 +21,8 @@ public class KafkaMonitor extends Application<KafkaMonitorConfiguration> {
         ClusterMonitorService clusterMonitor = new ClusterMonitorService(configuration, new ClusterState());
         environment.lifecycle().manage(clusterMonitor);
 
-        KafkaResource kafkaResource = new KafkaResource(clusterMonitor);
-        environment.jersey().register(kafkaResource);
+        environment.jersey().register(new KafkaResource(clusterMonitor));
+        environment.jersey().register(new KafkaConsumerResource(clusterMonitor));
     }
 
     @Override
