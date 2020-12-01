@@ -116,7 +116,7 @@ public class ClusterMonitorRunnable implements Runnable {
         while (true) {
             consumer.poll(0);
             Set<TopicPartition> assignment = consumer.assignment();
-            long dateTime = DateTime.now().minusHours(5).getMillis();
+            long dateTime = DateTime.now().minusMinutes(5).getMillis();
             Map<TopicPartition, Long> timestampsToSearch = new HashMap<>();
             for (TopicPartition topicPartition : assignment) {
                 timestampsToSearch.put(topicPartition, dateTime);
