@@ -47,4 +47,8 @@ public class ClusterState {
         Objects.requireNonNull(topic, "Topic can't be null");
         return topicState.get(topic);
     }
+
+    public void remove(ConsumerGroup consumerGroup) {
+        groupState.remove(consumerGroup);
+    }
 }
