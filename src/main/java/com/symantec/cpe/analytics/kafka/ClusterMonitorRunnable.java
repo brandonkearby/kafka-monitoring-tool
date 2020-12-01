@@ -67,7 +67,7 @@ public class ClusterMonitorRunnable implements Runnable {
                     GroupMetadata groupMetadata = GroupMetadataManager.readGroupMessageValue(baseKey.toString(), record.value(), Time.SYSTEM);
                     if (groupMetadata != null && !KafkaMonitorConfiguration.MONITORING_KAFKA_GROUP.equals(groupMetadata.groupId())) {
                         ConsumerGroup consumerGroup = new ConsumerGroup(groupMetadataKey.toString());
-                        if (!groupMetadata.hasOffsets()) {
+                        if (groupMetadata.currentState().toString().toLowerCase().contains("dead")) {
                             log.info("Removing groupMetadataKey = " + groupMetadataKey + "groupMetadata = " + groupMetadata);
                             clusterState.remove(consumerGroup);
                         }
