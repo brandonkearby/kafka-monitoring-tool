@@ -271,9 +271,16 @@ public class ClusterMonitorRunnable implements Runnable {
     }
 
     private void refreshTopicState() {
+        refreshTopicState(null);
+    }
+
+    private void refreshTopicState(String topicName) {
         synchronized (lock) {
             KafkaConsumer latestOffsetConsumer = getLatestOffsetConsumer();
             Map<String, List<PartitionInfo>> topics = latestOffsetConsumer.listTopics();
+            if (topicName != null) {
+                topics = Collections.singletonMap(topicName, topics.get(topicName));
+            }
             for (Map.Entry<String, List<PartitionInfo>> entry : topics.entrySet()) {
                 List<PartitionInfo> partitionInfos = entry.getValue();
                 for (PartitionInfo partitionInfo : partitionInfos) {
@@ -316,7 +323,7 @@ public class ClusterMonitorRunnable implements Runnable {
 
     public List<Map> seekToBeginning(String consumerGroup, String topic) {
         List<Map> statuses = new ArrayList<>();
-        refreshTopicState();
+        refreshTopicState(topic);
         TopicState topicState = clusterState.getTopicState(new Topic(topic));
         Set<Partition> partitions = topicState.getPartitions();
         Properties properties = getProperties(consumerGroup);
